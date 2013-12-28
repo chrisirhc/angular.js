@@ -786,6 +786,105 @@ describe('ngRepeat', function() {
     }));
   });
 
+<<<<<<< HEAD
+=======
+  it('should add separator comments after each item', inject(function ($compile, $rootScope) {
+    var check = function () {
+      var children = element.find('div');
+      expect(children.length).toBe(3);
+
+      // Note: COMMENT_NODE === 8
+      expect(children[2].nextSibling.nodeType).toBe(8);
+      expect(children[2].nextSibling.nodeValue).toBe(' end ngRepeat: val in values ');
+    }
+
+    $rootScope.values = [1, 2, 3];
+
+    element = $compile(
+      '<div>' +
+        '<div ng-repeat="val in values">val:{{val}};</div>' +
+      '</div>'
+    )($rootScope);
+
+    $rootScope.$digest();
+    check();
+
+    $rootScope.values.shift();
+    $rootScope.values.push(4);
+    $rootScope.$digest();
+    check();
+  }));
+
+
+  it('should remove whole block even if the number of elements inside it changes', inject(
+      function ($compile, $rootScope) {
+
+    $rootScope.values = [1, 2, 3];
+
+    element = $compile(
+      '<div>' +
+        '<div ng-repeat-start="val in values"></div>' +
+        '<span>{{val}}</span>' +
+        '<p ng-repeat-end></p>' +
+      '</div>'
+    )($rootScope);
+
+    $rootScope.$digest();
+
+    var ends = element.find('p');
+    expect(ends.length).toBe(3);
+
+    // insert an extra element inside the second block
+    var extra = angular.element('<strong></strong>')[0];
+    element[0].insertBefore(extra, ends[1]);
+
+    $rootScope.values.splice(1, 1);
+    $rootScope.$digest();
+
+    // expect the strong tag to be removed too
+    expect(childrenTagsOf(element)).toEqual([
+      'div', 'span', 'p',
+      'div', 'span', 'p'
+    ]);
+  }));
+
+
+  it('should move whole block even if the number of elements inside it changes', inject(
+      function ($compile, $rootScope) {
+
+    $rootScope.values = [1, 2, 3];
+
+    element = $compile(
+      '<div>' +
+        '<div ng-repeat-start="val in values"></div>' +
+        '<span>{{val}}</span>' +
+        '<p ng-repeat-end></p>' +
+      '</div>'
+    )($rootScope);
+
+    $rootScope.$digest();
+
+    var ends = element.find('p');
+    expect(ends.length).toBe(3);
+
+    // insert an extra element inside the third block
+    var extra = angular.element('<strong></strong>')[0];
+    element[0].insertBefore(extra, ends[2]);
+
+    // move the third block to the begining
+    $rootScope.values.unshift($rootScope.values.pop());
+    $rootScope.$digest();
+
+    // expect the strong tag to be moved too
+    expect(childrenTagsOf(element)).toEqual([
+      'div', 'span', 'strong', 'p',
+      'div', 'span', 'p',
+      'div', 'span', 'p'
+    ]);
+  }));
+
+
+>>>>>>> 42a2636... Fix tests
   describe('stability', function() {
     var a, b, c, d, lis;
 

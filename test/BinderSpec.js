@@ -148,7 +148,11 @@ describe('Binder', function() {
     $rootScope.items = items;
 
     $rootScope.$apply();
+<<<<<<< HEAD
     expect(element[0].childNodes.length - 1).toEqual(0);
+=======
+    expect(element[0].childNodes.length).toEqual(2);
+>>>>>>> 42a2636... Fix tests
 
     items.name = 'misko';
     $rootScope.$apply();
@@ -156,7 +160,11 @@ describe('Binder', function() {
 
     delete items.name;
     $rootScope.$apply();
+<<<<<<< HEAD
     expect(element[0].childNodes.length - 1).toEqual(0);
+=======
+    expect(element[0].childNodes.length).toEqual(2);
+>>>>>>> 42a2636... Fix tests
   }));
 
   it('IfTextBindingThrowsErrorDecorateTheSpan', function() {
