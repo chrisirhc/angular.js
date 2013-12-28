@@ -637,9 +637,7 @@ describe('ngRepeat', function() {
           '<div>' +
             '<!-- ngRepeat: i in items -->' +
             '<div ng-repeat="i in items" rr="">1|</div>' +
-            '<!-- end ngRepeat: i in items -->' +
             '<div ng-repeat="i in items" rr="">2|</div>' +
-            '<!-- end ngRepeat: i in items -->' +
           '</div>'
       );
     }));
@@ -669,9 +667,7 @@ describe('ngRepeat', function() {
           '<div>' +
               '<!-- ngRepeat: i in items -->' +
               '<div ng-repeat="i in items" rr="">1|</div>' +
-              '<!-- end ngRepeat: i in items -->' +
               '<div ng-repeat="i in items" rr="">2|</div>' +
-              '<!-- end ngRepeat: i in items -->' +
               '</div>'
       );
     }));
@@ -789,106 +785,6 @@ describe('ngRepeat', function() {
       expect(element.text()).toBe('');
     }));
   });
-
-  it('should add separator comments after each item', inject(function ($compile, $rootScope) {
-    var check = function () {
-      var children = element.find('div');
-      expect(children.length).toBe(3);
-
-      // Note: COMMENT_NODE === 8
-      expect(children[0].nextSibling.nodeType).toBe(8);
-      expect(children[0].nextSibling.nodeValue).toBe(' end ngRepeat: val in values ');
-      expect(children[1].nextSibling.nodeType).toBe(8);
-      expect(children[1].nextSibling.nodeValue).toBe(' end ngRepeat: val in values ');
-      expect(children[2].nextSibling.nodeType).toBe(8);
-      expect(children[2].nextSibling.nodeValue).toBe(' end ngRepeat: val in values ');
-    }
-
-    $rootScope.values = [1, 2, 3];
-
-    element = $compile(
-      '<div>' +
-        '<div ng-repeat="val in values">val:{{val}};</div>' +
-      '</div>'
-    )($rootScope);
-
-    $rootScope.$digest();
-    check();
-
-    $rootScope.values.shift();
-    $rootScope.values.push(4);
-    $rootScope.$digest();
-    check();
-  }));
-
-
-  it('should remove whole block even if the number of elements inside it changes', inject(
-      function ($compile, $rootScope) {
-
-    $rootScope.values = [1, 2, 3];
-
-    element = $compile(
-      '<div>' +
-        '<div ng-repeat-start="val in values"></div>' +
-        '<span>{{val}}</span>' +
-        '<p ng-repeat-end></p>' +
-      '</div>'
-    )($rootScope);
-
-    $rootScope.$digest();
-
-    var ends = element.find('p');
-    expect(ends.length).toBe(3);
-
-    // insert an extra element inside the second block
-    var extra = angular.element('<strong></strong>')[0];
-    element[0].insertBefore(extra, ends[1]);
-
-    $rootScope.values.splice(1, 1);
-    $rootScope.$digest();
-
-    // expect the strong tag to be removed too
-    expect(childrenTagsOf(element)).toEqual([
-      'div', 'span', 'p',
-      'div', 'span', 'p'
-    ]);
-  }));
-
-
-  it('should move whole block even if the number of elements inside it changes', inject(
-      function ($compile, $rootScope) {
-
-    $rootScope.values = [1, 2, 3];
-
-    element = $compile(
-      '<div>' +
-        '<div ng-repeat-start="val in values"></div>' +
-        '<span>{{val}}</span>' +
-        '<p ng-repeat-end></p>' +
-      '</div>'
-    )($rootScope);
-
-    $rootScope.$digest();
-
-    var ends = element.find('p');
-    expect(ends.length).toBe(3);
-
-    // insert an extra element inside the third block
-    var extra = angular.element('<strong></strong>')[0];
-    element[0].insertBefore(extra, ends[2]);
-
-    // move the third block to the begining
-    $rootScope.values.unshift($rootScope.values.pop());
-    $rootScope.$digest();
-
-    // expect the strong tag to be moved too
-    expect(childrenTagsOf(element)).toEqual([
-      'div', 'span', 'strong', 'p',
-      'div', 'span', 'p',
-      'div', 'span', 'p'
-    ]);
-  }));
-
 
   describe('stability', function() {
     var a, b, c, d, lis;
@@ -1078,22 +974,16 @@ describe('ngRepeat', function() {
 
       element = $compile(
         '<div>' +
-          '<div ng-repeat-start="val in values">val:{{val}};</div>' +
-          '<div ng-if="showMe" ng-repeat-end>if:{{val}};</div>' +
-        '</div>'
-      )($rootScope);
+            '<dt ng-repeat-start="book in books">{{book.title}}:</dt>' +
+            '<dd ng-repeat-end>{{book.description}};</dd>' +
+        '</div>')($rootScope);
 
-      $rootScope.$digest();
-      expect(element.find('div').length).toBe(6);
-
-      $rootScope.values.shift();
-      $rootScope.values.push(4);
-
-      $rootScope.$digest();
-      expect(element.find('div').length).toBe(6);
-      expect(element.text()).not.toContain('if:1;');
-    }));
-  });
+    $rootScope.$digest();
+    expect(element.text()).toEqual('T1:D1;T2:D2;');
+    $rootScope.books.push({title:'T3', description: 'D3'});
+    $rootScope.$digest();
+    expect(element.text()).toEqual('T1:D1;T2:D2;T3:D3;');
+  }));
 });
 
 describe('ngRepeat and transcludes', function() {
