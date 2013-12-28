@@ -1336,9 +1336,9 @@ function getter(obj, path, bindFnToScope) {
  * @param {Array} array like object
  * @returns jQlite object containing the elements
  */
-function getBlockElements(nodes) {
-  var startNode = nodes[0],
-      endNode = nodes[nodes.length - 1];
+function getBlockElements(nodes, endNode) {
+  var startNode = nodes[0];
+  if (!endNode) endNode = nodes[nodes.length - 1];
   if (startNode === endNode) {
     return jqLite(startNode);
   }

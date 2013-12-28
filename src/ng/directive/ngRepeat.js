@@ -318,7 +318,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
             // lastBlockMap is our own object so we don't need to use special hasOwnPropertyFn
             if (lastBlockMap.hasOwnProperty(key)) {
               block = lastBlockMap[key];
-              elementsToRemove = getBlockElements(block.clone);
+              elementsToRemove = getBlockElements(block.clone, block.endNode);
               $animate.leave(elementsToRemove);
               forEach(elementsToRemove, function(element) { element[NG_REMOVED] = true; });
               block.scope.$destroy();
@@ -344,7 +344,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
 
               if (getBlockStart(block) != nextNode) {
                 // existing item which got moved
-                $animate.move(getBlockElements(block.clone), null, jqLite(previousNode));
+                $animate.move(getBlockElements(block.clone, block.endNode), null, jqLite(previousNode));
               }
               previousNode = getBlockEnd(block);
             } else {
@@ -364,9 +364,11 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
 
             if (!block.scope) {
               $transclude(childScope, function(clone) {
-                clone[clone.length++] = document.createComment(' end ngRepeat: ' + expression + ' ');
-                $animate.enter(clone, null, jqLite(previousNode));
-                previousNode = clone;
+                var jqPrevNode = jqLite(previousNode);
+                block.endNode = document.createComment(' end ngRepeat: ' + expression + ' ');
+                jqPrevNode.after(block.endNode);
+                $animate.enter(clone, null, jqPrevNode);
+                previousNode = block.endNode;
                 block.scope = childScope;
                 // Note: We only need the first/last node of the cloned nodes.
                 // However, we need to keep the reference to the jqlite wrapper as it might be changed later
@@ -386,7 +388,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
   }
 
   function getBlockEnd(block) {
-    return block.clone[block.clone.length - 1];
+    return block.endNode;
   }
 }];
 
