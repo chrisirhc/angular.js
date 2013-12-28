@@ -317,15 +317,13 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
            }
          }
 
-         var prevNextBlock;
           // remove existing items
           for (key in lastBlockMap) {
             // lastBlockMap is our own object so we don't need to use special hasOwnPropertyFn
             if (lastBlockMap.hasOwnProperty(key)) {
               block = lastBlockMap[key];
-              prevNextBlock = lastBlockOrder[ lastBlockOrder.indexOf(block) + 1 ];
               // look for next block in lastblockorder and get everything up to and excluding that node
-              elementsToRemove = getBlockElementsNEW(block, prevNextBlock);
+              elementsToRemove = getBlockElementsNEW(block);
               $animate.leave(elementsToRemove);
               forEach(elementsToRemove, function(element) { element[NG_REMOVED] = true; });
               block.scope.$destroy();
@@ -337,10 +335,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
             key = (collection === collectionKeys) ? index : collectionKeys[index];
             value = collection[key];
             block = nextBlockOrder[index];
-            if (nextBlockOrder[index - 1]) {
-              prevNextBlock = lastBlockOrder[ lastBlockOrder.indexOf(nextBlockOrder[index - 1]) + 1 ];
-              previousNode = getBlockEndNEW(nextBlockOrder[index - 1], prevNextBlock);
-            }
+            if (nextBlockOrder[index - 1]) previousNode = getBlockEndNEW(nextBlockOrder[index - 1]);
 
             if (block.scope) {
               // if we have already seen this object, then we need to reuse the
@@ -357,7 +352,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
                 // existing item which got moved
                 $animate.move(getBlockElements(block.clone), null, jqLite(previousNode));
               }
-              previousNode = getBlockEnd(block);
+              previousNode = getBlockEndNEW(block);
             } else {
               // new item which we don't know about
               childScope = $scope.$new();
@@ -391,8 +386,9 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
           lastBlockOrder = nextBlockOrder;
         });
 
-      function getBlockEndNEW(block, nextBlock) {
+      function getBlockEndNEW(block) {
         var startNode = block.clone[0],
+          nextBlock = lastBlockOrder[ lastBlockOrder.indexOf(block) + 1 ],
           nextStartNode = nextBlock && nextBlock.clone[0];
 
         var element = startNode;
@@ -408,8 +404,9 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
         return lastElement;
       }
 
-      function getBlockElementsNEW(block, nextBlock) {
+      function getBlockElementsNEW(block) {
         var startNode = block.clone[0],
+          nextBlock = lastBlockOrder[ lastBlockOrder.indexOf(block) + 1 ],
           nextStartNode = nextBlock && nextBlock.clone[0];
 
         var element = startNode;
