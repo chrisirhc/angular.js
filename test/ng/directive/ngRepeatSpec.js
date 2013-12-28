@@ -1207,7 +1207,7 @@ describe('ngRepeat animations', function() {
     expect(item.text()).toBe('2');
   }));
 
-  it('should fire off the move animation',
+  iit('should fire off the move animation',
     inject(function($compile, $rootScope, $animate) {
 
       var item;
@@ -1239,6 +1239,44 @@ describe('ngRepeat animations', function() {
       expect(item.text()).toBe('2');
 
       item = $animate.flushNext('move').element;
+      expect(item.text()).toBe('1');
+  }));
+
+  it('should fire off the animation with only contents',
+    inject(function($compile, $rootScope, $animate) {
+
+      var item;
+
+      element = $compile(html(
+        '<div>' +
+          '<div ng-repeat="item in items">' +
+            '{{ item }}' +
+          '</div>' +
+        '</div>'
+      ))($rootScope);
+
+      $rootScope.items = ['1','2'];
+      $rootScope.$digest();
+
+      item = $animate.flushNext('enter').element;
+      expect(item.text()).toBe('1');
+      expect(item.length).toBe(1);
+
+      item = $animate.flushNext('enter').element;
+      expect(item.text()).toBe('2');
+      expect(item.length).toBe(1);
+
+      $rootScope.items = ['2','1'];
+      $rootScope.$digest();
+
+      item = $animate.flushNext('move').element;
+      expect(item.text()).toBe('2');
+      expect(item.length).toBe(1);
+
+      $rootScope.items = ['2'];
+      $rootScope.$digest();
+
+      item = $animate.flushNext('leave').element;
       expect(item.text()).toBe('1');
   }));
 

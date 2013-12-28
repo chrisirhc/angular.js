@@ -318,9 +318,11 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
             // lastBlockMap is our own object so we don't need to use special hasOwnPropertyFn
             if (lastBlockMap.hasOwnProperty(key)) {
               block = lastBlockMap[key];
-              elementsToRemove = getBlockElements(block.clone, block.endNode);
+              elementsToRemove = getBlockElements(block.clone, block.endNode.previousSibling);
+              jqLite(block.endNode).remove();
               $animate.leave(elementsToRemove);
               forEach(elementsToRemove, function(element) { element[NG_REMOVED] = true; });
+              block.endNode[NG_REMOVED] = true;
               block.scope.$destroy();
             }
           }
@@ -342,9 +344,15 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
                 nextNode = nextNode.nextSibling;
               } while(nextNode && nextNode[NG_REMOVED]);
 
+                console.log(previousNode.previousSibling, previousNode, nextNode, nextNode.nextSibling , nextNode.nextSibling.nextSibling);
               if (getBlockStart(block) != nextNode) {
                 // existing item which got moved
-                $animate.move(getBlockElements(block.clone, block.endNode), null, jqLite(previousNode));
+                console.log('elementsToMove', block.clone, block.endNode.previousSibling);
+                var elementsToMove = getBlockElements(block.clone, block.endNode.previousSibling);
+                console.log(elementsToMove, 'previousNode', previousNode);
+                jqLite(previousNode).after(block.endNode);
+                $animate.move(elementsToMove, null, jqLite(previousNode));
+                console.log('next', previousNode.nextSibling, previousNode.nextSibling.nextSibling);
               }
               previousNode = getBlockEnd(block);
             } else {
@@ -368,7 +376,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
                 block.endNode = document.createComment(' end ngRepeat: ' + expression + ' ');
                 jqPrevNode.after(block.endNode);
                 $animate.enter(clone, null, jqPrevNode);
-                previousNode = block.endNode;
+                previousNode = clone;
                 block.scope = childScope;
                 // Note: We only need the first/last node of the cloned nodes.
                 // However, we need to keep the reference to the jqlite wrapper as it might be changed later
