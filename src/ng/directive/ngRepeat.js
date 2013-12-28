@@ -248,7 +248,11 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
         //   - scope: bound scope
         //   - element: previous element.
         //   - index: position
-        var lastBlockMap = {};
+        var lastBlockMap = {},
+            lastBlockOrder = [];
+
+        var elementEnd = document.createComment(' end ngRepeat: ' + expression + ' ');
+        $element.after(elementEnd);
 
         //watch props
         $scope.$watchCollection(rhs, function ngRepeatAction(collection){
@@ -313,12 +317,15 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
            }
          }
 
+         var prevNextBlock;
           // remove existing items
           for (key in lastBlockMap) {
             // lastBlockMap is our own object so we don't need to use special hasOwnPropertyFn
             if (lastBlockMap.hasOwnProperty(key)) {
               block = lastBlockMap[key];
-              elementsToRemove = getBlockElements(block.clone);
+              prevNextBlock = lastBlockOrder[ lastBlockOrder.indexOf(block) + 1 ];
+              // look for next block in lastblockorder and get everything up to and excluding that node
+              elementsToRemove = getBlockElementsNEW(block, prevNextBlock);
               $animate.leave(elementsToRemove);
               forEach(elementsToRemove, function(element) { element[NG_REMOVED] = true; });
               block.scope.$destroy();
@@ -330,7 +337,10 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
             key = (collection === collectionKeys) ? index : collectionKeys[index];
             value = collection[key];
             block = nextBlockOrder[index];
-            if (nextBlockOrder[index - 1]) previousNode = getBlockEnd(nextBlockOrder[index - 1]);
+            if (nextBlockOrder[index - 1]) {
+              prevNextBlock = lastBlockOrder[ lastBlockOrder.indexOf(nextBlockOrder[index - 1]) + 1 ];
+              previousNode = getBlockEndNEW(nextBlockOrder[index - 1], prevNextBlock);
+            }
 
             if (block.scope) {
               // if we have already seen this object, then we need to reuse the
@@ -339,6 +349,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
 
               nextNode = previousNode;
               do {
+                if (nextNode && nextNode.nextSibling === elementEnd) break;
                 nextNode = nextNode.nextSibling;
               } while(nextNode && nextNode[NG_REMOVED]);
 
@@ -364,7 +375,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
 
             if (!block.scope) {
               $transclude(childScope, function(clone) {
-                clone[clone.length++] = document.createComment(' end ngRepeat: ' + expression + ' ');
+                // clone[clone.length++] = document.createComment(' end ngRepeat: ' + expression + ' ');
                 $animate.enter(clone, null, jqLite(previousNode));
                 previousNode = clone;
                 block.scope = childScope;
@@ -377,7 +388,42 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
             }
           }
           lastBlockMap = nextBlockMap;
+          lastBlockOrder = nextBlockOrder;
         });
+
+      function getBlockEndNEW(block, nextBlock) {
+        var startNode = block.clone[0],
+          nextStartNode = nextBlock && nextBlock.clone[0];
+
+        var element = startNode;
+        var lastElement = startNode;
+
+        do {
+          element = element.nextSibling;
+          if (!element || element === nextStartNode || element === elementEnd) break;
+          // if (!element || jqLite(element).scope() !== block.scope) break;
+          lastElement = element;
+        } while (true /* || element !== endNode */); // Should use the end of the repeat
+
+        return lastElement;
+      }
+
+      function getBlockElementsNEW(block, nextBlock) {
+        var startNode = block.clone[0],
+          nextStartNode = nextBlock && nextBlock.clone[0];
+
+        var element = startNode;
+        var elements = [element];
+
+        do {
+          element = element.nextSibling;
+          if (!element || element === nextStartNode || element === elementEnd) break;
+          // if (!element || jqLite(element).scope() !== block.scope) break;
+          elements.push(element);
+        } while (true /* || element !== endNode */); // Should use the end of the repeat
+
+        return jqLite(elements);
+      }
     }
   };
 
