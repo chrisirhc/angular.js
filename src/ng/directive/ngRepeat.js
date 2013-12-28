@@ -251,8 +251,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
         var lastBlockMap = {},
             lastBlockOrder = [];
 
-        var elementEnd = document.createComment(' end ngRepeat: ' + expression + ' ');
-        $element.after(elementEnd);
+        var elementEnd;
 
         //watch props
         $scope.$watchCollection(rhs, function ngRepeatAction(collection){
@@ -272,6 +271,10 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
               nextBlockOrder = [],
               elementsToRemove;
 
+          if (!elementEnd) {
+            elementEnd = document.createComment(' end ngRepeat: ' + expression + ' ');
+            $element.after(elementEnd);
+          }
 
           if (isArrayLike(collection)) {
             collectionKeys = collection;
