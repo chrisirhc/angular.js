@@ -467,6 +467,24 @@ angular.module('ngAnimate', ['ng'])
         return defer.promise;
       }
 
+      var cleanupFunctions = [];
+      var asyncCleanUpQueued = null;
+
+      function asyncCleanUp(fn) {
+        cleanupFunctions.push(fn);
+
+        if (!asyncCleanUpQueued) {
+            asyncCleanUpQueued = $$asyncCallback(function () {
+                while(cleanupFunctions.length) {
+                    cleanupFunctions.shift()();
+                }
+                asyncCleanUpQueued = null;
+            });
+        }
+
+        return asyncCleanUpQueued;
+      }
+
       function resolveElementClasses(element, cache, runningAnimations) {
         runningAnimations = runningAnimations || {};
         var map = {};
@@ -1272,7 +1290,7 @@ angular.module('ngAnimate', ['ng'])
               if (runner && runner.isClassBased) {
                 cleanup(element, className);
               } else {
-                $$asyncCallback(function() {
+                asyncCleanUp(function() {
                   var data = element.data(NG_ANIMATE_STATE) || {};
                   if (localAnimationCount == data.index) {
                     cleanup(element, className, animationEvent);
